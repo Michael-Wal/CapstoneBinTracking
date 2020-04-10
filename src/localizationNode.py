@@ -1,15 +1,17 @@
-#usr/bin/env python3
+#!/usr/bin/env python3
 ## This ROS node is a wrapper for locationFromDetection.py, allowing it to be used in a
 ## ROS-based processing pipeline. 
 ## AUTHOR: Walker Byrnes
 ## EMAIL: walkerbyrnes@gmail.com
 
+print("Beginning imports")
 import rospy
 from std_msgs.msg import Header
 from geometry_msgs.msg import Point, PointStamped
 import locationFromDetection
 from capstone_bin_tracking.msg import StereoDetection
-print("Through imports")
+print("Imports complete")
+
 
 class LocalizationNode:
 
@@ -46,29 +48,29 @@ class LocalizationNode:
 	        "y2": msg.y2,
 	        "height": abs(msg.y2 - msg.y1),
 	        "width": abs(msg.x2 - msg.x1)
-    	    }
+   	    }
+            
+	    detection3D = locationFromDetection(msg.rgbImage, msg.depthImage, det, cameraLocationOffset=self.camOffset)
 
-    	    detection3D = locationFromDetection(msg.rgbImage, msg.depthImage, det, cameraLocationOffset=self.camOffset)
+	    # Copy message header from rgb image
+	    retMsgHead = msg.rgbImage.header
 
-    	    # Copy message header from rgb image
-    	    retMsgHead = msg.rgbImage.header
+	    # Construct Point message
+	    retMsgPoint = Point()
+	    retMsgPoint.x = detection3D[0]
+	    retMsgPoint.y = detection3D[1]
+	    retMsgPoint.z = detection3D[2]
 
-    	    # Construct Point message
-    	    retMsgPoint = Point()
-    	    retMsgPoint.x = detection3D[0]
-    	    retMsgPoint.y = detection3D[1]
-    	    retMsgPoint.z = detection3D[2]
+	    retMsg = PointStamped()
+	    retMsg.header = retMsgHead
+	    retMsg.point = retMsgPoint
 
-    	    retMsg = PointStamped()
-    	    retMsg.header = retMsgHead
-    	    retMsg.point = retMsgPoint
+	    # Publish stamped localization
+	    self.pubHandler.publish(retMsg)
 
-    	    # Publish stamped localization
-    	    self.pubHandler.publish(retMsg)
+	def onDestroy(self):
 
-        def onDestroy(self):
-
-            print("Shutting down LocalizationNode...")
+	    print("Shutting down Localization Node...")
 
 
 # Initialize node
