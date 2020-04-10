@@ -1,5 +1,5 @@
 ## This function calculates the location of the worker in world coordinates from a detection 
-## in camera coordinates. ptions exist to either use stereo vision or mono vision with depth 
+## in camera coordinates. Options exist to either use stereo vision or mono vision with depth 
 ## from height estimate.
 ## AUTHOR: Walker Byrnes
 ## EMAIL: walkerbyrnes@gmail.com
@@ -11,7 +11,7 @@ from PIL import Image
 # Source: https://raspberrypi.stackexchange.com/questions/81964/calculating-focal-length-of-raspberry-pi-camera
 CAMERA_FOCAL_LENGTH_PX = 2571
 
-def LocationFromDetection(imageRGB, imageDepth, detection, cameraLocationOffset=(0, 0, 0), stereo=False, debug=True):
+def LocationFromDetection(imageRGB, imageDepth, detection, cameraLocationOffset=(0, 0, 0), stereo=True, debug=False):
 
     # If debug is enabled, show rgb and depth images for inspection
     if debug:
@@ -143,6 +143,6 @@ if __name__ == "__main__":
         "height": corners[1][1] - corners[0][1],
         "width": corners[1][0] - corners[0][0]
     }
-    resLoc = LocationFromDetection(rgbImage, depthImage, detection, stereo=True, debug=True)
+    resLoc = LocationFromDetection(rgbImage, depthImage, detection, debug=True)
     print("Worker Location: ", resLoc)
 
