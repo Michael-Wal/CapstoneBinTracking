@@ -6,7 +6,8 @@
 import rospy
 from sensor_msgs import Image
 from std_msgs import Header
-from geometry_msgs import Point
+from geometry_msgs import Point, PointStamped
+
 import locationFromDetection
 
 class LocalizationNode:
