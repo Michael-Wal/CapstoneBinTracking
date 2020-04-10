@@ -1,73 +1,74 @@
+#usr/bin/env python3
 ## This ROS node is a wrapper for locationFromDetection.py, allowing it to be used in a
 ## ROS-based processing pipeline. 
 ## AUTHOR: Walker Byrnes
 ## EMAIL: walkerbyrnes@gmail.com
 
 import rospy
-from sensor_msgs import Image
-from std_msgs import Header
-from geometry_msgs import Point, PointStamped
-
+from std_msgs.msg import Header
+from geometry_msgs.msg import Point, PointStamped
 import locationFromDetection
+from capstone_bin_tracking.msg import StereoDetection
+print("Through imports")
 
 class LocalizationNode:
 
-	def __init__(camOff=(0, 0, 0)):
+	def __init__(self, camOff=(0, 0, 0)):
 		
-		# Initialize node
-		rospy.init_node("LocalizationNode")
+	    # Initialize node
+	    rospy.init_node("LocalizationNode")
 
-		# Setup publishers and subscribers
-		self.subHandler = rospy.Subscriber("cam_detection", StereoDetection, self.handleDetection)
-		self.pubHandler = rospy.Publisher("cam_worker_location", PointStamped, 10)
+	    # Setup publishers and subscribers
+	    self.subHandler = rospy.Subscriber("cam_detection", StereoDetection, self.handleDetection)
+	    self.pubHandler = rospy.Publisher("cam_worker_location", PointStamped, queue_size=10)
 
-		# Initialize class variables
-		self.camOffset = camOff
+	    # Initialize class variables
+	    self.camOffset = camOff
 
-		# Set shutdown callback function
-		rospy.on_shutdown(self.onDestroy)
+	    # Set shutdown callback function
+	    rospy.on_shutdown(self.onDestroy)
 
 	def handleDetection(self, msg):
 
-		# StereoDetection message definition
-		# rgbImage: sensor_msgs.Image
-		# depthImage: sensor_msgs.Image
-		# x1: int64  # Bounding box coordinates
-		# x2: int64
-		# y1: int64
-		# y2: int64
+	    # StereoDetection message definition
+	    # rgbImage: sensor_msgs.Image
+	    # depthImage: sensor_msgs.Image
+	    # x1: int64  # Bounding box coordinates
+	    # x2: int64
+	    # y1: int64
+	    # y2: int64
 
-		# Construct detection dictionary
-		det = {
+	    # Construct detection dictionary
+	    det = {
 	        "x1": msg.x1,
 	        "y1": msg.x2,
 	        "x2": msg.y1,
 	        "y2": msg.y2,
 	        "height": abs(msg.y2 - msg.y1),
 	        "width": abs(msg.x2 - msg.x1)
-    	}
+    	    }
 
-    	detection3D = locationFromDetection(msg.rgbImage, msg.depthImage, det, cameraLocationOffset=self.camOffset)
+    	    detection3D = locationFromDetection(msg.rgbImage, msg.depthImage, det, cameraLocationOffset=self.camOffset)
 
-    	# Copy message header from rgb image
-    	retMsgHead = msg.rgbImage.header
+    	    # Copy message header from rgb image
+    	    retMsgHead = msg.rgbImage.header
 
-    	# Construct Point message
-    	retMsgPoint = Point()
-    	retMsgPoint.x = detection3D[0]
-    	retMsgPoint.y = detection3D[1]
-    	retMsgPoint.z = detection3D[2]
+    	    # Construct Point message
+    	    retMsgPoint = Point()
+    	    retMsgPoint.x = detection3D[0]
+    	    retMsgPoint.y = detection3D[1]
+    	    retMsgPoint.z = detection3D[2]
 
-    	retMsg = PointStamped()
-    	retMsg.header = retMsgHead
-    	retMsg.point = retMsgPoint
+    	    retMsg = PointStamped()
+    	    retMsg.header = retMsgHead
+    	    retMsg.point = retMsgPoint
 
-    	# Publish stamped localization
-    	self.pubHandler.publish(retMsg)
+    	    # Publish stamped localization
+    	    self.pubHandler.publish(retMsg)
 
-    def onDestroy(self):
+        def onDestroy(self):
 
-    	print("Shutting down LocalizationNode...")
+            print("Shutting down LocalizationNode...")
 
 
 # Initialize node
