@@ -37,7 +37,7 @@ class DatabaseMessagingNode:
         binStr = msg.data
 
         # Send detection string to database publisher
-        self.dbPublisher.SendMessage(binStr)
+        self.dbPublisher.sendMessage(binStr)
 
         if self.debug:
             print("Message ", binStr, " published successfully")

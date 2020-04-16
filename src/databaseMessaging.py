@@ -24,7 +24,7 @@ class IoTClient:
         # Initialize client connection
         self.client = IoTHubDeviceClient.create_from_connection_string(CONNECTION_STRING)
 
-    def SendMessage(self, location):
+    def sendMessage(self, location):
 
         # Get timestamp for message
         today = str(date.today())
@@ -41,13 +41,13 @@ class IoTClient:
 
         # Send message to azure database
         print( "Sending message: {}".format(msg_s) )
-        client.send_message(msg_s)
+        self.client.send_message(msg_s)
         print ( "Message successfully sent" )
 
     def onDestroy(self):
 
         # Ensure client is closed when object is destroyed
-        self.client.close()
+        self.client.disconnect()
 
 
 """ Procedural test script for Azure Messaging
