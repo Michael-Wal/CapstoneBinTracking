@@ -4,42 +4,50 @@
 
 from threading import Thread
 
+from workerDetection import WorkerDetector
 from locationFromDetection import LocationFromDetection
-from findBin_direct import findBin
+from findBin import WarehouseAisle
 from databaseMessaging import IoTClient
 
 
 class ControllerStandalone:
 	""" This class controls the analysis pipeline for detecting workers. """
 
-	def __init__(self, debug=False):
+	def __init__(self, aisle=WarehouseAisle(1), basePath="~/catkin_ws/src/CapstoneBinTracking/", debug=False):
 
 		print("Initializing Standalone Controller.")
 
 		self.debug = debug
+		self.basePath = basePath
 
 		# Create class members for pipeline processes
+		self.workerDetector = WorkerDetector(self.basePath)
+		self.warehouse = aisle
 		self.dbConn = IoTClient()
 
 	def processImage(imageRGB, imageDepth):
 
 		# Step 1: Detection
+		detections = self.workerDetector(imageRGB)
 
-		# Step 2: Localization
-		detection3D = LocationFromDetection(imageRGB, imageDepth)
+		# Perform remaining steps for each detection in case of multiple workers in scene
+		for det in detections:
 
-		if self.debug:
-			print("Localization: ", detection3D)
+			# Step 2: Localization
+			detection3D = LocationFromDetection(imageRGB, imageDepth, det)
 
-		# Step 3: Bin Identification
-		binStr = findBin(detection3D[0], detection3D[1], detection3D[2])
+			if self.debug:
+				print("Localization: ", detection3D)
 
-		if self.debug:
-			print("Bin Location: ", binStr)
+			# Step 3: Bin Identification
+			binStr = self.warehouse.findBin(detection3D)
 
-		# Step 4: Database Connection
-		self.dbConn.sendMessage(binStr)
+			if self.debug:
+				print("Bin Location: ", binStr)
 
-		if self.debug:
-			print("Database Message Sent")
-			print("Processing pipeline complete.")
+			# Step 4: Database Connection
+			self.dbConn.sendMessage(binStr)
+
+			if self.debug:
+				print("Database Message Sent")
+				print("Processing pipeline complete.")

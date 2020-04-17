@@ -38,7 +38,16 @@ class WorkerDetector:
     		plt.show()
 
     	# Extract bounding boxes from detection dictionaries
-    	bboxes = [d["box_points"] for d in detections]
+    	bboxes = []
+    	for d in detections:
+    		bboxes.append({
+    			"x1": d[0],
+    			"y1": d[1],
+    			"x2": d[2],
+    			"y2": d[3],
+    			"height": d[3] - d[1],
+    			"width": d[2] - d[0]
+    			})
 
     	# Return list of bounding boxes
     	return bboxes
