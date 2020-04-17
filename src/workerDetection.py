@@ -8,53 +8,61 @@ import os
 
 class WorkerDetector:
 
-	def __init__(self, basePath, debug=False):
+    def __init__(self, modelPath="/home/walker/catkin_ws/src/CapstoneBinTracking/data/resnet50_coco_best_v2.0.1.h5", debug=False, inspect=False):
 
-		# Set debug flag
-		self.debug = debug
+        # Set debug flag
+        self.debug = debug
+        self.inspect = inspect
 
-		# Initialize detector
-		self.detector = ObjectDetection()
-		self.detector.setModelTypeAsRetinaNet()
-    	self.detector.setModelPath( os.path.join(basePath , "data/resnet50_coco_best_v2.0.1.h5"))
+        # Initialize detector
+        self.detector = ObjectDetection()
+        self.detector.setModelTypeAsRetinaNet()
+        self.detector.setModelPath(modelPath)
 
-    	# Set network to only detect people
-    	self.customObjs = self.detector.CustomObjects(person=True)
+        # Set network to only detect people
+        self.customObjs = self.detector.CustomObjects(person=True)
 
-    	# Available detection speed options: normal, fast, faster, fastest, flash
-    	self.detector.loadModel(detection_speed='fast')
+        # Available detection speed options: normal, fast, faster, fastest, flash
+        self.detector.loadModel(detection_speed='fast')
 
-    	print("Worker Detector ready.")
+        print("Worker Detector ready.")
 
     def detectFromImage(self, imageRGB):
 
-    	# Perform detection
-    	detImg, detections = self.detector.detectCustomObjectsFromImage(custom_objects=self.customObjs, input_image=imageRGB, 
-    		input_type="array", output_type="array")
+        # Perform detection
+        detImg, detections = self.detector.detectCustomObjectsFromImage(custom_objects=self.customObjs, input_image=imageRGB, 
+            input_type="array", output_type="array")
 
-    	if self.debug:
-    		print("Detected ", len(detections), " workers.")
-    		plt.imshow(detImg)
-    		plt.show()
+        if self.debug:
+            print("Detected ", len(detections), " workers.")
 
-    	# Extract bounding boxes from detection dictionaries
-    	bboxes = []
-    	for d in detections:
-    		bboxes.append({
-    			"x1": d[0],
-    			"y1": d[1],
-    			"x2": d[2],
-    			"y2": d[3],
-    			"height": d[3] - d[1],
-    			"width": d[2] - d[0]
-    			})
+        if self.inspect:
+            plt.imshow(detImg)
+            plt.show()
 
-    	# Return list of bounding boxes
-    	return bboxes
+        # Extract bounding boxes from detection dictionaries
+        bboxes = []
+        for d in detections:
+            if self.debug:
+                print(type(d))
+                print(d)
+        
+            d = d["box_points"]
+            bboxes.append({
+                "x1": d[0],
+                "y1": d[1],
+                "x2": d[2],
+                "y2": d[3],
+                "height": d[3] - d[1],
+                "width": d[2] - d[0]
+                })
+
+        # Return list of bounding boxes
+        return bboxes
 
 
 """ Procedural test script for detection
-	Author: Muhammad Safwan
+    Author: Muhammad Safwan
 
 """
 
@@ -75,7 +83,7 @@ def detectWorker(execution_path):
     detector.loadModel()
 
     detections = detector.detectObjectsFromImage(input_image=os.path.join(execution_path , "6.png"), 
-    	output_image_path=os.path.join(execution_path , "image_6.png"))
+        output_image_path=os.path.join(execution_path , "image_6.png"))
 
     for eachObject in detections:
         print(eachObject["name"] , " : " , eachObject["percentage_probability"] )

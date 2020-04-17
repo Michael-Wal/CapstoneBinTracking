@@ -5,7 +5,7 @@ class WarehouseAisle:
 	# X perpendicular to aisle, Y parallel to aisle, Z upwards
 
 
-	def __init__(self, aisleNum, aisleWidth=4.0, binWidth=3.0, binHeight=1.0, binDepth=1.0, aisleLength=20.0, aisleHeight=5.0):
+	def __init__(self, aisleNum, aisleWidth=3.0, binWidth=1.0, binHeight=0.3, binDepth=2.0, aisleLength=20.0, aisleHeight=4.0):
 
 		# Aisle number
 		self.aisleNum = aisleNum
@@ -32,7 +32,7 @@ class WarehouseAisle:
 			print("X Coordinate ", coords[0], " is not within a bin.")
 			return None
 
-		# Check Section from Y coordinate
+		# Check Section from Z coordinate
 		if coords[1] < 0 or coords[1] > self.aisleLength:
 			print("Y Coordinate ", coords[1], " is not within the aisle.")
 			return None

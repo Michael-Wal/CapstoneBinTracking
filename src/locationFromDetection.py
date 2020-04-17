@@ -1,8 +1,4 @@
-## This function calculates the location of the worker in world coordinates from a detection 
-## in camera coordinates. Options exist to either use stereo vision or mono vision with depth 
-## from height estimate.
-## AUTHOR: Walker Byrnes
-## EMAIL: walkerbyrnes@gmail.com
+
 
 import numpy as np
 from PIL import Image
@@ -11,10 +7,10 @@ from PIL import Image
 # Source: https://raspberrypi.stackexchange.com/questions/81964/calculating-focal-length-of-raspberry-pi-camera
 CAMERA_FOCAL_LENGTH_PX = 2571
 
-def LocationFromDetection(imageRGB, imageDepth, detection, cameraLocationOffset=(0, 0, 0), stereo=True, debug=False):
+def LocationFromDetection(imageRGB: Image, imageDepth: Image, detection, cameraLocationOffset=None, stereo=True, debug=False, inspect=False):
 
     # If debug is enabled, show rgb and depth images for inspection
-    if debug:
+    if inspect:
         ShowDetection(imageRGB, imageDepth, detection)
 
     # Extract image plane location from detection
@@ -31,8 +27,16 @@ def LocationFromDetection(imageRGB, imageDepth, detection, cameraLocationOffset=
     # Calculate depth of detection, either through stereo vision or size estimation
     if stereo:
         # If rgb and depth images are of different sizes, convert lookup coordinates between them
-        depthX_px = (detectionX_px / imageRGB.width) * imageDepth.width
-        depthY_px = (detectionY_px / imageRGB.height) * imageDepth.height
+        depthX_px = (detectionX_px / imageRGB.size[1]) * imageDepth.size[1]
+        depthY_px = (detectionY_px / imageRGB.size[0]) * imageDepth.size[1]
+
+        # convert detection coordinates to depth image size
+        depthDetection = detection
+        depthDetection["x1"] = depthX_px
+        depthDetection["y1"] = depthY_px
+        depthDetection = ConvertDetectionCoords(imageRGB.size, imageDepth.size, detection)
+        depthX_px = depthDetection["x1"]
+        depthY_px = depthDetection["y1"]
 
         # Use stereo depth lookup to calculate 3D detection coordinate
         Z_m = np.mean(imageDepth.getpixel((depthY_px, depthX_px)))  # Assume depth is normal to camera plane
@@ -53,13 +57,15 @@ def LocationFromDetection(imageRGB, imageDepth, detection, cameraLocationOffset=
     Y_m = Z_m * v_px / CAMERA_FOCAL_LENGTH_PX
 
     # Combine components into camera frame location of worker
-    workerLocationCamera = [X_m, Y_m, Z_m]
+    workerLocationCamera = [X_m, Y_m, Z_m, 1]
     if debug:
         print("Detected worker in camera frame:\n", workerLocationCamera)
 
     # Transform detection from camera frame into world frame
-    # TODO: Calculate and apply camera transformation matrix
-    workerLocationWorld = np.subtract(workerLocationCamera, cameraLocationOffset)
+    if cameraLocationOffset is not None:
+        workerLocationWorld = np.dot(cameraLocationOffset, workerLocationCamera)
+    else:
+        workerLocationWorld = workerLocationCamera
 
     return workerLocationWorld
 
@@ -86,6 +92,9 @@ def ShowDetection(imageRGB, imageDepth, detection):
     ) )
 
     plt.show()
+
+    print("ImageRGB: ", imageRGB.size)
+    print("ImageDep: ", imageDepth.size)
 
     # Show depth image with equivalent rectangle
     depthDetection = ConvertDetectionCoords(imageRGB.size, imageDepth.size, detection)
