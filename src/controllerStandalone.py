@@ -152,32 +152,25 @@ if __name__ == "__main__":
 
     TEST_WITH_VIDEO = True
 
+    PathRGB = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testcolorvid.mp4"
+    PathDep = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testdepthvid.mp4"
+
     if TEST_WITH_VIDEO:
 
         cs = ControllerStandalone(cameraOffset=camOffset, debug=True, inspect=False)
 
-        # Import videos
-        videoPathRGB = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testcolorvid.mp4"
-        videoPathDep = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testdepthvid.mp4"
-
         # Process videos
-        cs.processVideo(videoPathRGB, videoPathDep, outputFile=True)
+        cs.processVideo(PathRGB, PathDep, outputFile=True)
 
     else:
 
         cs = ControllerStandalone(cameraOffset=camOffset, debug=True, inspect=True)
 
         # Import test RGB image
-        imagePathRGB = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testcolor.jpg"  # TEST IMAGE PATH
-        imgRGB = Image.open(imagePathRGB)
-        # plt.imshow(imgRGB)
-        # plt.show()
+        imgRGB = Image.open(PathRGB)
 
         # Import test Depth image
-        imagePathDepth = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testdepth.jpg"  # TEST IMAGE PATH
-        imgDepth = Image.open(imagePathDepth)
-        # plt.imshow(imgDepth)
-        # plt.show()
+        imgDepth = Image.open(PathDep)
 
         print("\n\nSetup complete, calling analysis pipeline...\n\n")
         cs.processImage(imgRGB, imgDepth)
