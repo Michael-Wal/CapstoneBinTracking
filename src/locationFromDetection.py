@@ -5,7 +5,7 @@ from PIL import Image
 
 # Raspberry Pi camera module focal length: 3.6mm
 # Source: https://raspberrypi.stackexchange.com/questions/81964/calculating-focal-length-of-raspberry-pi-camera
-CAMERA_FOCAL_LENGTH_PX = 2571
+CAMERA_FOCAL_LENGTH_PX = 942.8
 
 def LocationFromDetection(imageRGB: Image, imageDepth: Image, detection, cameraLocationOffset=None, stereo=True, debug=False, inspect=False):
 
@@ -93,8 +93,7 @@ def ShowDetection(imageRGB, imageDepth, detection):
 
     plt.show()
 
-    print("ImageRGB: ", imageRGB.size)
-    print("ImageDep: ", imageDepth.size)
+    return
 
     # Show depth image with equivalent rectangle
     depthDetection = ConvertDetectionCoords(imageRGB.size, imageDepth.size, detection)

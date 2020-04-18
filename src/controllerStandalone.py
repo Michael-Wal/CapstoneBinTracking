@@ -6,7 +6,7 @@ from threading import Thread
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-from cv2 import VideoCapture, cvtColor, COLOR_BGR2RGB
+import cv2
 
 from workerDetection import WorkerDetector
 from locationFromDetection import LocationFromDetection
@@ -16,6 +16,7 @@ from databaseMessaging import IoTClient
 
 
 DEFAULT_MODEL_PATH = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/resnet50_coco_best_v2.0.1.h5"
+VIDEO_FPS = 8.0
 
 
 class ControllerStandalone:
@@ -30,7 +31,7 @@ class ControllerStandalone:
         self.cameraOffset = cameraOffset
 
         # Create class members for pipeline processes
-        self.workerDetector = WorkerDetector(modelPath, debug=debug, inspect=inspect)
+        self.workerDetector = WorkerDetector(modelPath, debug=debug)
         self.warehouse = aisle
         self.tracker = TrackWorkers(debug=False)
         self.dbConn = IoTClient()
@@ -38,7 +39,7 @@ class ControllerStandalone:
     def processImage(self, imageRGB, imageDepth):
 
         # Step 1: Detection
-        detections = self.workerDetector.detectFromImage(np.asarray(imageRGB))
+        detections, detImg = self.workerDetector.detectFromImage(np.asarray(imageRGB))
 
         # Perform remaining steps for each detection in case of multiple workers in scene
         for det in detections:
@@ -63,13 +64,16 @@ class ControllerStandalone:
                     print("Database Message Sent")
                     print("Processing pipeline complete.")
 
-    def processVideo(self, videoRGB, videoDepth):
+    def processVideo(self, videoRGB, videoDepth, outputFile=False):
 
         print("Procesing videos:\nRGB: ", videoRGB, "\nDep: ", videoDepth)
 
-        captureRGB = VideoCapture(videoRGB)
-        captureDep = VideoCapture(videoDepth)
+        captureRGB = cv2.VideoCapture(videoRGB)
+        captureDep = cv2.VideoCapture(videoDepth)
 
+        if outputFile:
+            outImages = []
+            vidWrite = None
         while captureRGB.isOpened() and captureDep.isOpened():
             
             # Step 0: Extract frames from video and convert to PIL format
@@ -79,11 +83,11 @@ class ControllerStandalone:
                 break
 
             # Convert frame to PIL format
-            imageRGB = Image.fromarray(cvtColor(frameRGB, COLOR_BGR2RGB))
+            imageRGB = Image.fromarray(cv2.cvtColor(frameRGB, cv2.COLOR_BGR2RGB))
             imageDepth = Image.fromarray(frameDep)
             
             # Step 1: Detection
-            detections = self.workerDetector.detectFromImage(np.asarray(imageRGB))
+            detections, detImg = self.workerDetector.detectFromImage(np.asarray(imageRGB))
 
             # Perform remaining steps for each detection in case of multiple workers in scene
             bins = []
@@ -114,6 +118,28 @@ class ControllerStandalone:
                 if self.debug:
                     print("Database Message Sent")
 
+            # Output video frames to file
+            if outputFile:
+                detImg = cv2.cvtColor(detImg, cv2.COLOR_BGR2RGB)
+                if binStr is not None:
+
+                    cv2.putText(detImg, binStr, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+                # cv2.imshow("image", detImg)
+                # sleep(0.1)
+                # cv2.destroyAllWindows()
+    
+                if not vidWrite:
+                    print("Setting up video with resolution ", detImg.shape[:2])
+                    vidWrite = cv2.VideoWriter("./detectionVid.avi", cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), VIDEO_FPS, (detImg.shape[1], detImg.shape[0]))
+                
+                print("Writing frame to video")
+                vidWrite.write(detImg)
+
+        if vidWrite:
+            vidWrite.release()
+
+
         print("Video processing complete")
 
 
@@ -121,7 +147,7 @@ class ControllerStandalone:
 if __name__ == "__main__":
 
     # Estimated camera matrix for test image
-    camOffset = np.asarray([[-1, 0, 0, -1.5], [0, 0, 1, 0.0], [0, 1, 0, 1.0]])
+    camOffset = np.asarray([[1, 0, 0, -1.9], [0, 0, 1, 0.0], [0, 1, 0, 1.5]])
     print("Camera Matrix:\n", camOffset)
 
     TEST_WITH_VIDEO = True
@@ -135,7 +161,7 @@ if __name__ == "__main__":
         videoPathDep = "/home/walker/catkin_ws/src/CapstoneBinTracking/data/testdepthvid.mp4"
 
         # Process videos
-        cs.processVideo(videoPathRGB, videoPathDep)
+        cs.processVideo(videoPathRGB, videoPathDep, outputFile=True)
 
     else:
 

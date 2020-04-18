@@ -23,7 +23,7 @@ class WorkerDetector:
         self.customObjs = self.detector.CustomObjects(person=True)
 
         # Available detection speed options: normal, fast, faster, fastest, flash
-        self.detector.loadModel(detection_speed='fast')
+        self.detector.loadModel(detection_speed='fastest')
 
         print("Worker Detector ready.")
 
@@ -58,7 +58,7 @@ class WorkerDetector:
                 })
 
         # Return list of bounding boxes
-        return bboxes
+        return bboxes, detImg
 
 
 """ Procedural test script for detection
