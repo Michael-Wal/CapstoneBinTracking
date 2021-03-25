@@ -94,7 +94,7 @@ python-debian==0.1.32
 python-qt-binding==0.4.0
 pytz==2018.3
 pyxdg==0.25
-PyYAML==5.3.1
+PyYAML==5.4
 qt-dotgraph==0.4.0
 qt-gui==0.4.0
 qt-gui-cpp==0.4.0
