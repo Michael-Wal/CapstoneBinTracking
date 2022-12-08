@@ -12,7 +12,7 @@ bondpy==1.8.3
 Brlapi==0.6.6
 camera-calibration==1.14.0
 camera-calibration-parsers==1.11.13
-certifi==2018.1.18
+certifi==2022.12.7
 chardet==3.0.4
 command-not-found==0.3
 controller-manager==0.17.0
